@@ -1,0 +1,63 @@
+name: Compilar APK Android
+
+on:
+  push:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Generar APK de Broters_Almacen
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Descomprimir archivos ZIP del proyecto
+        run: |
+          shopt -s nullglob
+          for f in *.zip; do
+            if [ -f "$f" ]; then
+              echo "Descomprimiendo archivo: $f"
+              unzip -o "$f"
+            fi
+          done
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configurar Java JDK 17 (Estándar para Android 34)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Instalar dependencias del proyecto
+        run: npm install --legacy-peer-deps
+
+      - name: Compilar interfaz móvil (100% Offline)
+        run: npx vite build
+
+      - name: Instalar Capacitor 6 Android (Compatible y Estable)
+        run: |
+          npm install @capacitor/core@6.2.0 @capacitor/cli@6.2.0 @capacitor/android@6.2.0 --legacy-peer-deps
+          npx cap add android || true
+          npx cap sync android
+
+      - name: Compilar APK Android
+        run: |
+          cd android
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m" >> gradle.properties
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Publicar archivo APK para descargar
+        uses: actions/upload-artifact@v4
+        with:
+          name: Broters_Almacen-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
