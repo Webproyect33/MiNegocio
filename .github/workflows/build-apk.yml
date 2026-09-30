@@ -47,6 +47,31 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
+      - name: Configurar clave de firma fija (Garantiza actualizaciones sin conflictos)
+        run: |
+          # 1. Decodificar keystore fija y única
+          echo "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" | base64 -d > android/app/broters.keystore
+
+          # 2. Configurar firma en android/app/build.gradle e incrementar versionCode
+          node -e '
+            const fs = require("fs");
+            let gradle = fs.readFileSync("android/app/build.gradle", "utf8");
+            const signing = `
+                signingConfigs {
+                    debug {
+                        storeFile file("broters.keystore")
+                        storePassword "broters123"
+                        keyAlias "broters"
+                        keyPassword "broters123"
+                    }
+                }
+            `;
+            gradle = gradle.replace("android {", "android {" + signing);
+            const runNum = parseInt(process.env.GITHUB_RUN_NUMBER || "10", 10) + 10;
+            gradle = gradle.replace(/versionCode \d+/, "versionCode " + runNum);
+            fs.writeFileSync("android/app/build.gradle", gradle);
+          '
+
       - name: Compilar APK Android
         run: |
           cd android
